@@ -80,16 +80,16 @@ class TrainModule(object):
 
         self.optimizer = torch.optim.Adam(self.model.parameters(), args.init_lr)
         self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=0.96, last_epoch=-1)
-        save_path = 'weights_'+args.dataset
+        save_path = '/BBAV/models/' + 'weights_'+args.dataset
         start_epoch = 1
-        
+
         # add resume part for continuing training when break previously, 10-16-2020
         if args.resume_train:
-            self.model, self.optimizer, start_epoch = self.load_model(self.model, 
-                                                                        self.optimizer, 
-                                                                        args.resume_train, 
+            self.model, self.optimizer, start_epoch = self.load_model(self.model,
+                                                                        self.optimizer,
+                                                                        args.resume_train,
                                                                         strict=True)
-        # end 
+        # end
 
         if not os.path.exists(save_path):
             os.mkdir(save_path)
@@ -113,6 +113,7 @@ class TrainModule(object):
                  for x in self.dataset_phase[args.dataset]}
 
         dsets_loader = {}
+        print(args.data_dir)
         dsets_loader['train'] = torch.utils.data.DataLoader(dsets['train'],
                                                            batch_size=args.batch_size,
                                                            shuffle=True,

@@ -14,7 +14,7 @@ try:
     import dota_utils as util
 except:
     import dota_kit.dota_utils as util
-from dotadevkit.polyiou import polyiou
+import polyiou
 import pdb
 import math
 from multiprocessing import Pool
@@ -186,11 +186,13 @@ def mergesingle(dstpath, nms, fullname):
     name = util.custombasename(fullname)
     #print('name:', name)
     dstname = os.path.join(dstpath, name + '.txt')
+    # print('dstname : {}'.format(dstname))
     with open(fullname, 'r') as f_in:
         nameboxdict = {}
         lines = f_in.readlines()
         splitlines = [x.strip().split(' ') for x in lines]
         for splitline in splitlines:
+            # print('splitline : {}'.format(splitline))
             subname = splitline[0]
             splitname = subname.split('__')
             oriname = splitname[0]

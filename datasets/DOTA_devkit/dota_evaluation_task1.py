@@ -278,16 +278,15 @@ def main():
     # classnames = ['plane', 'baseball-diamond', 'bridge', 'ground-track-field', 'small-vehicle', 'large-vehicle', 'ship', 'tennis-court',
     #             'basketball-court', 'storage-tank',  'soccer-ball-field', 'roundabout', 'harbor', 'swimming-pool', 'helicopter']
 
-    detpath = r'PATH_TO_BE_CONFIGURED/Task1_{:s}.txt'
-    annopath = r'PATH_TO_BE_CONFIGURED/{:s}.txt' # change the directory to the path of val/labelTxt, if you want to do evaluation on the valset
-    imagesetfile = r'PATH_TO_BE_CONFIGURED/valset.txt'
+    detpath = r'/BBAV/models/result_dota/Task1_{:s}.txt'
+    annopath = r'/BBAV/DS/val/labelTxt/{:s}.txt' # change the directory to the path of val/labelTxt, if you want to do evaluation on the valset
+    imagesetfile = r'/BBAV/DS/val/test.txt'
 
     # For DOTA-v1.5
     # classnames = ['plane', 'baseball-diamond', 'bridge', 'ground-track-field', 'small-vehicle', 'large-vehicle', 'ship', 'tennis-court',
     #             'basketball-court', 'storage-tank',  'soccer-ball-field', 'roundabout', 'harbor', 'swimming-pool', 'helicopter', 'container-crane']
     # For DOTA-v1.0
-    classnames = ['plane', 'baseball-diamond', 'bridge', 'ground-track-field', 'small-vehicle', 'large-vehicle', 'ship', 'tennis-court',
-                'basketball-court', 'storage-tank',  'soccer-ball-field', 'roundabout', 'harbor', 'swimming-pool', 'helicopter']
+    classnames = ['car', 'bus', 'container', 'small_truck', 'large_truck']
     classaps = []
     map = 0
     for classname in classnames:

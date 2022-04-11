@@ -77,7 +77,7 @@ class TestModule(object):
 
 
     def test(self, args, down_ratio):
-        save_path = 'weights_'+args.dataset
+        save_path = '/BBAV/models/' + 'weights_'+args.dataset
         self.model = self.load_model(self.model, os.path.join(save_path, args.resume))
         self.model = self.model.to(self.device)
         self.model.eval()
