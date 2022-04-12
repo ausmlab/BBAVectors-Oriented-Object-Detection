@@ -14,7 +14,7 @@ try:
     import dota_utils as util
 except:
     import dota_kit.dota_utils as util
-import polyiou
+from dotadevkit.polyiou import polyiou
 import pdb
 import math
 from multiprocessing import Pool
