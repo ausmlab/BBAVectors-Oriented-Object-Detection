@@ -26,13 +26,29 @@ def parse_args():
     parser.add_argument('--data_dir', type=str, default='../Datasets/dota', help='Data directory')
     parser.add_argument('--phase', type=str, default='test', help='Phase choice= {train, test, eval}')
     parser.add_argument('--wh_channels', type=int, default=8, help='Number of channels for the vectors (4x2)')
+    parser.add_argument('--classnames', type=str, default=None, help='path of a file with the name of all categories')
     args = parser.parse_args()
     return args
+
+
+def read_classnames(filepath):
+    classname_file = open(filepath, 'r')
+    classnames = [class_name.strip() for class_name in classname_file.readlines()]
+    return classnames
 
 if __name__ == '__main__':
     args = parse_args()
     dataset = {'dota': DOTA, 'hrsc': HRSC}
-    num_classes = {'dota': 6, 'hrsc': 1}
+
+    # We'll set num_classes for both datasets to the number of classes in the
+    #   current dataset, this is ok since the other value will not be used.
+    if args.classnames is not None:
+        classnames = read_classnames(args.classnames)
+        num_classes = {'dota': len(classnames), 'hrsc': len(classnames)}
+    else:
+        classnames = ['car','small_truck','large_truck','bus','container','LCV']
+        num_classes = {'dota': 6, 'hrsc': 1}
+
     heads = {'hm': num_classes[args.dataset],
              'wh': 10,
              'reg': 2,

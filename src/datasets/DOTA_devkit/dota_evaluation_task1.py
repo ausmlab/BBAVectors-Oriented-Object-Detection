@@ -11,12 +11,31 @@
     Note, the evaluation is on the large scale images
 """
 import xml.etree.ElementTree as ET
+import os.path as osp
 import os
 #import cPickle
 import numpy as np
 import matplotlib.pyplot as plt
 from dotadevkit.polyiou import polyiou
 from functools import partial
+
+import argparse
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='DOTA task 1 evaluation')
+    parser.add_argument('--classnames', type=str, default=None, help='path of a file with the name of all categories')
+    parser.add_argument('--detpath', type=str, default='/BBAV/models/result_dota/', help='path of files with task1 results')
+    parser.add_argument('--annopath', type=str, default='/BBAV/DS/val/labelTxt/', help='path of label files')
+    parser.add_argument('--imagesetfile', type=str, default='/BBAV/DS/val/test.txt', help='path of file containing list of image names')
+
+    args = parser.parse_args()
+    return args
+
+def read_classnames(filepath):
+    classname_file = open(filepath, 'r')
+    classnames = [class_name.strip() for class_name in classname_file.readlines()]
+    return classnames
+
 
 def parse_gt(filename):
     """
@@ -277,16 +296,21 @@ def main():
     # imagesetfile = r'/home/dingjian/code/DOTA/DOTA/media/testset.txt'
     # classnames = ['plane', 'baseball-diamond', 'bridge', 'ground-track-field', 'small-vehicle', 'large-vehicle', 'ship', 'tennis-court',
     #             'basketball-court', 'storage-tank',  'soccer-ball-field', 'roundabout', 'harbor', 'swimming-pool', 'helicopter']
+    args = parse_args()
 
-    detpath = r'/BBAV/models/result_dota/Task1_{:s}.txt'
-    annopath = r'/BBAV/DS/val/labelTxt/{:s}.txt' # change the directory to the path of val/labelTxt, if you want to do evaluation on the valset
-    imagesetfile = r'/BBAV/DS/val/test.txt'
+    detpath = args.detpath + '/Task1_{:s}.txt'
+    annopath = args.annonpath + '{:s}.txt' # change the directory to the path of val/labelTxt, if you want to do evaluation on the valset
+    imagesetfile = args.imagesetfile
 
     # For DOTA-v1.5
     # classnames = ['plane', 'baseball-diamond', 'bridge', 'ground-track-field', 'small-vehicle', 'large-vehicle', 'ship', 'tennis-court',
     #             'basketball-court', 'storage-tank',  'soccer-ball-field', 'roundabout', 'harbor', 'swimming-pool', 'helicopter', 'container-crane']
     # For DOTA-v1.0
-    classnames = ['car', 'bus', 'container', 'small_truck', 'large_truck']
+    if args.classnames is not None:
+        classnames =  read_classnames(args.classnames)
+    else:
+        classnames = ['car', 'bus', 'container', 'small_truck', 'large_truck']
+
     classaps = []
     map = 0
     for classname in classnames:

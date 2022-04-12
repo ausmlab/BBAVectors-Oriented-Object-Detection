@@ -19,7 +19,7 @@ def collater(data):
     return out_data_dict
 
 class TrainModule(object):
-    def __init__(self, dataset, num_classes, model, decoder, down_ratio):
+    def __init__(self, dataset, num_classes, model, decoder, down_ratio, classnames=None):
         torch.manual_seed(317)
         self.dataset = dataset
         self.dataset_phase = {'dota': ['train'],
@@ -29,6 +29,7 @@ class TrainModule(object):
         self.model = model
         self.decoder = decoder
         self.down_ratio = down_ratio
+        self.classnames = None
 
     def save_model(self, path, epoch, model, optimizer):
         if isinstance(model, torch.nn.DataParallel):
@@ -109,7 +110,8 @@ class TrainModule(object):
                                    phase=x,
                                    input_h=args.input_h,
                                    input_w=args.input_w,
-                                   down_ratio=self.down_ratio)
+                                   down_ratio=self.down_ratio,
+                                   classnames=self.classnames)
                  for x in self.dataset_phase[args.dataset]}
 
         dsets_loader = {}
