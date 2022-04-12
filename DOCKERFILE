@@ -15,4 +15,3 @@ RUN conda install -c conda-forge opencv=4.3.0 && \
 
 WORKDIR /BBAV
 RUN mkdir models
-COPY ./BBAVectors-Oriented-Object-Detection ./BBAVectors-Oriented-Object-Detection
