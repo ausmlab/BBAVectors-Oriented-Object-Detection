@@ -1,0 +1,18 @@
+# Project needs python 3.6.9 torch 1.6.0 opencv 4.3.0
+# FROM ubuntu:18.04
+# FROM determinedai/environments:cuda-11.0-pytorch-1.7-tf-2.4-gpu-ebb783a
+FROM pytorch/pytorch:1.6.0-cuda10.1-cudnn7-runtime
+
+#############################
+### Install dependencies  ###
+#############################
+
+# Install Open-CV 4.3.0 & dotadevkit && pytorch 1.6
+RUN apt-get update && \
+    apt-get install ffmpeg libsm6 libxext6  -y
+RUN conda install -c conda-forge opencv=4.3.0 && \
+    pip install dotadevkit
+
+WORKDIR /BBAV
+RUN mkdir models
+COPY ./BBAVectors-Oriented-Object-Detection ./BBAVectors-Oriented-Object-Detection
