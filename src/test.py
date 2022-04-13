@@ -18,13 +18,15 @@ def apply_mask(image, mask, alpha=0.5):
     return image
 
 class TestModule(object):
-    def __init__(self, dataset, num_classes, model, decoder):
+    def __init__(self, dataset, num_classes, model, decoder, save_dir='./', mode='show'):
         torch.manual_seed(317)
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.dataset = dataset
         self.num_classes = num_classes
         self.model = model
         self.decoder = decoder
+        self.save_dir = save_dir
+        self.mode = mode
 
     def load_model(self, model, resume):
         checkpoint = torch.load(resume, map_location=lambda storage, loc: storage)
@@ -167,7 +169,7 @@ class TestModule(object):
                     ori_image = cv2.drawContours(ori_image, [np.int0(box)], -1, (255,0,255),1,1)
                     # box = cv2.boxPoints(cv2.minAreaRect(box))
                     # ori_image = cv2.drawContours(ori_image, [np.int0(box)], -1, (0,255,0),1,1)
-                    cv2.putText(ori_image, '{:.2f} {}'.format(score, cat), (box[1][0], box[1][1]),
+                    cv2.putText(ori_image, '{:.2f} {}'.format(score, cat), (int(box[1][0]), int(box[1][1])),
                                 cv2.FONT_HERSHEY_COMPLEX, 0.5, (0,255,255), 1,1)
 
             if args.dataset == 'hrsc':
@@ -182,11 +184,14 @@ class TestModule(object):
                     box = np.int0(box)
                     cv2.drawContours(ori_image, [box], 0, (255, 255, 255), 1)
 
-            cv2.imshow('pr_image', ori_image)
-            k = cv2.waitKey(0) & 0xFF
-            if k == ord('q'):
-                cv2.destroyAllWindows()
-                exit()
+            if self.mode=='save':
+                cv2.imwrite(os.path.join(self.save_dir, str(img_id) + '.jpg'), ori_image)
+            else:
+                cv2.imshow('pr_image', ori_image)
+                k = cv2.waitKey(0) & 0xFF
+                if k == ord('q'):
+                    cv2.destroyAllWindows()
+                    exit()
             #"""
 
         total_time = total_time[1:]

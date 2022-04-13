@@ -27,6 +27,8 @@ def parse_args():
     parser.add_argument('--phase', type=str, default='test', help='Phase choice= {train, test, eval}')
     parser.add_argument('--wh_channels', type=int, default=8, help='Number of channels for the vectors (4x2)')
     parser.add_argument('--classnames', type=str, default=None, help='path of a file with the name of all categories')
+    parser.add_argument('--test_mode', type=str, default=None, help='either <show> or <save> the results of test phase')
+    parser.add_argument('--test_save_dir', type=str, default=None, help='where to save results for test phase, applicable in save mode')
     args = parser.parse_args()
     return args
 
@@ -74,7 +76,7 @@ if __name__ == '__main__':
 
         ctrbox_obj.train_network(args)
     elif args.phase == 'test':
-        ctrbox_obj = test.TestModule(dataset=dataset, num_classes=num_classes, model=model, decoder=decoder)
+        ctrbox_obj = test.TestModule(dataset=dataset, num_classes=num_classes, model=model, decoder=decoder, save_dir=args.test_save_dir, mode=args.test_mode)
         ctrbox_obj.test(args, down_ratio=down_ratio)
     else:
         ctrbox_obj = eval.EvalModule(dataset=dataset, num_classes=num_classes, model=model, decoder=decoder)
