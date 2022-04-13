@@ -29,7 +29,7 @@ class TrainModule(object):
         self.model = model
         self.decoder = decoder
         self.down_ratio = down_ratio
-        self.classnames = None
+        self.classnames = classnames
 
     def save_model(self, path, epoch, model, optimizer):
         if isinstance(model, torch.nn.DataParallel):

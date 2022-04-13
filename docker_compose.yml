@@ -7,7 +7,7 @@ services:
     # command: bash -c "cd BBAVectors-Oriented-Object-Detection/datasets/DOTA_devkit &&
     #          python dota_evaluation_task1.py"
     command: bash -c "cd src &&
-             python main.py --data_dir /BBAV/DS/train --num_epoch 80 --batch_size 4 --dataset dota --phase train"
+             python main.py --data_dir /BBAV/DS/train --num_epoch 5 --batch_size 4 --dataset dota --phase train --classnames ./configs/classes.txt"
     volumes:
       - PATH_TO_DATASET:/BBAV/DS
       - PATH_TO_SAVE_DIR:/BBAV/models/

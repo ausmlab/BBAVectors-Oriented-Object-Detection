@@ -69,7 +69,8 @@ if __name__ == '__main__':
                                        num_classes=num_classes,
                                        model=model,
                                        decoder=decoder,
-                                       down_ratio=down_ratio)
+                                       down_ratio=down_ratio,
+                                       classnames=classnames)
 
         ctrbox_obj.train_network(args)
     elif args.phase == 'test':

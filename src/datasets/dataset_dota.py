@@ -5,9 +5,9 @@ import numpy as np
 from .DOTA_devkit.ResultMerge_multi_process import mergebypoly
 
 class DOTA(BaseDataset):
-    def __init__(self, data_dir, phase, input_h=None, input_w=None, down_ratio=None, category=['car','small_truck','large_truck','bus','container','LCV']):
+    def __init__(self, data_dir, phase, input_h=None, input_w=None, down_ratio=None, classnames=['car','small_truck','large_truck','bus','container','LCV']):
         super(DOTA, self).__init__(data_dir, phase, input_h, input_w, down_ratio)
-        self.category = category
+        self.category = classnames
         self.color_pans = [(204,78,210),
                            (0,192,255),
                            (0,131,0),
