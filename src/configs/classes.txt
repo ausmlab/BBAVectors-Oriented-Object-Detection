@@ -1,0 +1,6 @@
+bus
+car
+container
+large_truck
+small_truck
+LCV
