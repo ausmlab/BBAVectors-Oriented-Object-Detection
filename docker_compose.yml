@@ -4,8 +4,12 @@ services:
   bbav_code:
     image: bbav:latest
     container_name: "bbav_code"
-    # command: bash -c "cd BBAVectors-Oriented-Object-Detection/datasets/DOTA_devkit &&
-    #          python dota_evaluation_task1.py"
+    # for evaluation:
+    #   python dota_evaluation_task1.py"
+    # for test:
+    #   python main.py --data_dir /BBAV/DS/val --batch_size 4 --dataset dota --phase test --resume model_5.pth --classnames ./configs/classes.txt --test_mode save --test_save_dir /BBAV/test_results/"
+    # for evaluation:
+    #   python main.py --data_dir /BBAV/DS/val --resume model_5.pth --conf_thresh 0.1 --batch_size 4 --dataset dota --phase eval --classnames ./configs/classes.txt
     command: bash -c "cd src &&
              python main.py --data_dir /BBAV/DS/train --num_epoch 5 --batch_size 4 --dataset dota --phase train --classnames ./configs/classes.txt"
     volumes:

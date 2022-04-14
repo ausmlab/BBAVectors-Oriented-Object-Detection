@@ -25,7 +25,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='DOTA task 1 evaluation')
     parser.add_argument('--classnames', type=str, default=None, help='path of a file with the name of all categories')
     parser.add_argument('--detpath', type=str, default='/BBAV/models/result_dota/', help='path of files with task1 results')
-    parser.add_argument('--annopath', type=str, default='/BBAV/DS/val/labelTxt/', help='path of label files')
+    parser.add_argument('--annonpath', type=str, default='/BBAV/DS/val/labelTxt/', help='path of label files')
     parser.add_argument('--imagesetfile', type=str, default='/BBAV/DS/val/test.txt', help='path of file containing list of image names')
 
     args = parser.parse_args()
