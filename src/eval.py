@@ -4,13 +4,14 @@ import func_utils
 
 
 class EvalModule(object):
-    def __init__(self, dataset, num_classes, model, decoder):
+    def __init__(self, dataset, num_classes, model, decoder, classnames):
         torch.manual_seed(317)
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.dataset = dataset
         self.num_classes = num_classes
         self.model = model
         self.decoder = decoder
+        self.classnames = classnames
 
 
     def load_model(self, model, resume):
@@ -35,7 +36,8 @@ class EvalModule(object):
                                phase='test',
                                input_h=args.input_h,
                                input_w=args.input_w,
-                               down_ratio=down_ratio)
+                               down_ratio=down_ratio,
+                               classnames=self.classnames)
 
         func_utils.write_results(args,
                                  self.model,

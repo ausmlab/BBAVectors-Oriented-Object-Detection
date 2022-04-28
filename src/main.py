@@ -35,7 +35,7 @@ def parse_args():
 
 def read_classnames(filepath):
     classname_file = open(filepath, 'r')
-    classnames = [class_name.strip() for class_name in classname_file.readlines()]
+    classnames = [class_name.strip() for class_name in classname_file.readlines() if class_name.strip()]
     return classnames
 
 if __name__ == '__main__':
@@ -76,8 +76,8 @@ if __name__ == '__main__':
 
         ctrbox_obj.train_network(args)
     elif args.phase == 'test':
-        ctrbox_obj = test.TestModule(dataset=dataset, num_classes=num_classes, model=model, decoder=decoder, save_dir=args.test_save_dir, mode=args.test_mode)
+        ctrbox_obj = test.TestModule(dataset=dataset, num_classes=num_classes, model=model, decoder=decoder, save_dir=args.test_save_dir, mode=args.test_mode, classnames=classnames)
         ctrbox_obj.test(args, down_ratio=down_ratio)
     else:
-        ctrbox_obj = eval.EvalModule(dataset=dataset, num_classes=num_classes, model=model, decoder=decoder)
+        ctrbox_obj = eval.EvalModule(dataset=dataset, num_classes=num_classes, model=model, decoder=decoder, classnames=classnames)
         ctrbox_obj.evaluation(args, down_ratio=down_ratio)

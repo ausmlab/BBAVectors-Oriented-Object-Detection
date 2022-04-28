@@ -18,7 +18,7 @@ def apply_mask(image, mask, alpha=0.5):
     return image
 
 class TestModule(object):
-    def __init__(self, dataset, num_classes, model, decoder, save_dir='./', mode='show'):
+    def __init__(self, dataset, num_classes, model, decoder, save_dir='./', mode='show', classnames=None):
         torch.manual_seed(317)
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.dataset = dataset
@@ -27,6 +27,7 @@ class TestModule(object):
         self.decoder = decoder
         self.save_dir = save_dir
         self.mode = mode
+        self.classnames = classnames
 
     def load_model(self, model, resume):
         checkpoint = torch.load(resume, map_location=lambda storage, loc: storage)
@@ -89,7 +90,8 @@ class TestModule(object):
                                phase='test',
                                input_h=args.input_h,
                                input_w=args.input_w,
-                               down_ratio=down_ratio)
+                               down_ratio=down_ratio,
+                               classnames=self.classnames)
         data_loader = torch.utils.data.DataLoader(dsets,
                                                   batch_size=1,
                                                   shuffle=False,
