@@ -11,6 +11,7 @@ import os
 
 def parse_args():
     parser = argparse.ArgumentParser(description='BBAVectors Implementation')
+
     parser.add_argument('--num_epoch', type=int, default=1, help='Number of epochs')
     parser.add_argument('--batch_size', type=int, default=1, help='Number of batch size')
     parser.add_argument('--num_workers', type=int, default=4, help='Number of workers')
@@ -26,9 +27,16 @@ def parse_args():
     parser.add_argument('--data_dir', type=str, default='../Datasets/dota', help='Data directory')
     parser.add_argument('--phase', type=str, default='test', help='Phase choice= {train, test, eval}')
     parser.add_argument('--wh_channels', type=int, default=8, help='Number of channels for the vectors (4x2)')
+
     parser.add_argument('--classnames', type=str, default=None, help='path of a file with the name of all categories')
+
     parser.add_argument('--test_mode', type=str, default=None, help='either <show> or <save> the results of test phase')
     parser.add_argument('--test_save_dir', type=str, default=None, help='where to save results for test phase, applicable in save mode')
+
+    parser.add_argument('--eval_w_train', action='store_true', help='Whether to perform evaluation while training (to check overfitting)')
+    parser.add_argument('--eval_data_dir', type=str, default='/BBAV/DS/val1024', help='Directory pointing to evaluation data')
+    parser.add_argument('--log_dir', type=str, default='/BBAV/logs', help='where to save tensorboard logs')
+
     args = parser.parse_args()
     return args
 

@@ -46,7 +46,7 @@ class BaseDataset(data.Dataset):
 
     def load_annotation(self, index):
         """
-        Return: dictionary of {'pts': float np array of [bl, tl, tr, br], 
+        Return: dictionary of {'pts': float np array of [bl, tl, tr, br],
                                 'cat': int np array of class_index}
         Explaination:
                 bl: bottom left point of the bounding box, format [x, y]
@@ -263,10 +263,8 @@ class BaseDataset(data.Dataset):
                     'image_w': image_w,
                     'image_h': image_h}
 
-        elif self.phase == 'train':
+        elif self.phase == 'train' or self.phase == 'validate':
             annotation = self.load_annotation(index)
             image, annotation = self.data_transform(image, annotation)
             data_dict = self.generate_ground_truth(image, annotation)
             return data_dict
-
-

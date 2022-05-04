@@ -48,7 +48,7 @@ class TestModule(object):
         img = img + 1. * clmsk - 1. * mskd
         return np.uint8(img)
 
-    def imshow_heatmap(self, pr_dec, images):
+    def imshow_heatmap(self, pr_dec, images, image_name):
         wh = pr_dec['wh']
         hm = pr_dec['hm']
         cls_theta = pr_dec['cls_theta']
@@ -71,12 +71,12 @@ class TestModule(object):
         ax3.set_xlabel('center hm')
         ax3.imshow(hm)
         ax5 = fig.add_subplot(2, 3, 5)
-        ax5.set_xlabel('input image')
+        ax5.set_xlabel('cls_theta')
         ax5.imshow(cls_theta)
         ax6 = fig.add_subplot(2, 3, 6)
         ax6.set_xlabel('input image')
         ax6.imshow(images)
-        plt.savefig('heatmap.png')
+        plt.savefig(image_name)
 
 
     def test(self, args, down_ratio):
@@ -107,7 +107,7 @@ class TestModule(object):
             with torch.no_grad():
                 pr_decs = self.model(image)
 
-            #self.imshow_heatmap(pr_decs[2], image)
+            self.imshow_heatmap(pr_decs[2], image, os.path.join(self.save_dir, 'hmap_{}.png'.format(img_id)))
 
             torch.cuda.synchronize(self.device)
             decoded_pts = []

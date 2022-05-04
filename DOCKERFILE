@@ -11,7 +11,8 @@ FROM pytorch/pytorch:1.6.0-cuda10.1-cudnn7-runtime
 RUN apt-get update && \
     apt-get install ffmpeg libsm6 libxext6  -y
 RUN conda install -c conda-forge opencv=4.3.0 && \
-    pip install dotadevkit
+    pip install dotadevkit &&
+    pip install tensorboard
 
 WORKDIR /BBAV
 RUN mkdir models

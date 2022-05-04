@@ -5,6 +5,9 @@ import numpy as np
 import loss
 import cv2
 import func_utils
+# for tensorboard
+import torchvision
+from torch.utils.tensorboard import SummaryWriter
 
 
 def collater(data):
@@ -115,7 +118,7 @@ class TrainModule(object):
                  for x in self.dataset_phase[args.dataset]}
 
         dsets_loader = {}
-        print(args.data_dir)
+
         dsets_loader['train'] = torch.utils.data.DataLoader(dsets['train'],
                                                            batch_size=args.batch_size,
                                                            shuffle=True,
@@ -124,9 +127,29 @@ class TrainModule(object):
                                                            drop_last=True,
                                                            collate_fn=collater)
 
+        if args.eval_w_train:
+            # we pass 'test' for phase, since that's how dataset_dota.py works
+            # this can be amended later when a new custom dataloader is developed
+            eval_dsets = dataset_module(data_dir=args.eval_data_dir,
+                                       phase='validate',
+                                       input_h=args.input_h,
+                                       input_w=args.input_w,
+                                       down_ratio=self.down_ratio,
+                                       classnames=self.classnames)
+            test_loader = torch.utils.data.DataLoader(eval_dsets,
+                                                      batch_size=args.batch_size,
+                                                      shuffle=True,
+                                                      num_workers=args.num_workers,
+                                                      pin_memory=True,
+                                                      drop_last=True,
+                                                      collate_fn=collater)
+
+
         print('Starting training...')
         train_loss = []
+        eval_loss = []
         ap_list = []
+        writer = SummaryWriter(log_dir=args.log_dir)
         for epoch in range(start_epoch, args.num_epoch+1):
             print('-'*10)
             print('Epoch: {}/{} '.format(epoch, args.num_epoch))
@@ -134,15 +157,23 @@ class TrainModule(object):
                                         data_loader=dsets_loader['train'],
                                         criterion=criterion)
             train_loss.append(epoch_loss)
+            writer.add_scalar('Loss/train', epoch_loss, epoch)
             self.scheduler.step(epoch)
 
             np.savetxt(os.path.join(save_path, 'train_loss.txt'), train_loss, fmt='%.6f')
 
-            if epoch % 5 == 0 or epoch > 20:
+            if epoch % 20 == 0:
                 self.save_model(os.path.join(save_path, 'model_{}.pth'.format(epoch)),
                                 epoch,
                                 self.model,
                                 self.optimizer)
+
+            if args.eval_w_train and epoch%5==0:
+                epoch_loss = self.run_epoch(phase='validate',
+                                            data_loader=test_loader,
+                                            criterion=criterion)
+                eval_loss.append(epoch_loss)
+                writer.add_scalar('Loss/eval', epoch_loss, epoch)
 
             if 'test' in self.dataset_phase[args.dataset] and epoch%5==0:
                 mAP = self.dec_eval(args, dsets['test'])
@@ -153,6 +184,9 @@ class TrainModule(object):
                             epoch,
                             self.model,
                             self.optimizer)
+            writer.flush()
+
+
 
     def run_epoch(self, phase, data_loader, criterion):
         if phase == 'train':
