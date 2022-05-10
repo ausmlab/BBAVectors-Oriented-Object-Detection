@@ -67,13 +67,13 @@ if __name__ == '__main__':
     image_names = [f for f in listdir(src_images_path) if isfile(join(src_images_path, f))]
 
     for image_name in tqdm(image_names):
-        image = cv2.imread(join(src_images_path, image_name), cv2.IMREAD_GRAYSCALE)
+        image = cv2.imread(join(src_images_path, image_name))
         with open(join(src_label_path, image_name.split('.')[0] + '.txt')) as f:
             labels = f.readlines()
             for i, label in enumerate(labels):
                 x1, y1, x2, y2, x3, y3, x4, y4, category, _ = label.split(' ')
                 x1, y1, x2, y2, x3, y3, x4, y4 = int(float(x1)), int(float(y1)),int(float(x2)), int(float(y2)),int(float(x3)), int(float(y3)),int(float(x4)), int(float(y4))
-                x = np.zeros(image.shape, dtype=np.uint8)
+                x = np.zeros(image.shape[:2], dtype=np.uint8)
                 pts = np.array([[x1, y1], [x2, y2],
                                 [x3, y3], [x4, y4]],
                                 np.int32).reshape(-1, 1, 2)
