@@ -1,0 +1,100 @@
+from os import listdir, mkdir
+from os.path import isfile, join, exists
+import cv2
+import numpy as np
+import pathlib
+import math
+import copy
+
+src_path = '/home/bahman/Documents/codes/York/truck_count/labelling/truck/train/'
+dst_unaligned_path = '/home/bahman/Documents/codes/York/truck_count/re_class/dataset/un'
+dst_aligned_path = '/home/bahman/Documents/codes/York/truck_count/re_class/dataset/al'
+src_images_path = join(src_path, 'images')
+src_label_path = join(src_path, 'labelTxt')
+
+object_margin = 10
+
+def rotate_image(image, angle):
+    image_center = tuple(np.array(image.shape[1::-1]) / 2)
+    rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
+    result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
+    return result
+
+def align_pnts(pts, center):
+    delta_x = pts[1, 0] - pts[0, 0]
+    delta_y = pts[1, 1] - pts[0, 1]
+    theta = math.degrees(np.arctan(delta_y/delta_x))
+    # rotation_mtrx = np.array([[-math.sin(theta), -math.cos(theta)],
+    #                          [math.cos(theta), -math.sin(theta)]])
+    rotation_mtrx = cv2.getRotationMatrix2D(center, theta, 1.0)
+    shited_pnts = pts.reshape([4, 2])
+    newrow = [1 for i in range(4)]
+    shited_pnts = np.vstack([shited_pnts.T, newrow]).T
+    rotated_pnts = np.matmul(rotation_mtrx, shited_pnts.T).T
+    readjusted_pnts = rotated_pnts
+
+    return readjusted_pnts.astype(int)
+
+def align_image(image, pts):
+    # This is assuming the point are from top left and clockwise:
+    delta_x = pts[1, 0] - pts[0, 0]
+    delta_y = pts[1, 1] - pts[0, 1]
+    theta = math.degrees(np.arctan(delta_y/delta_x))
+    image = rotate_image(image, theta)
+    return image
+
+def crop_image(image, pts):
+    x1, y1, x2, y2, x3, y3, x4, y4 = pts
+    max_y = max([y1, y2, y3, y4])
+    min_y = min([y1, y2, y3, y4])
+    max_x = max([x1, x2, x3, x4])
+    min_x = min([x1, x2, x3, x4])
+    left = max([min_x - object_margin, 0])
+    right = min([max_x + object_margin, object.shape[1]])
+    top = max([min_y - object_margin, 0])
+    bottom = min([max_y + object_margin, object.shape[0]])
+    # print(top)
+    # print(bottom)
+    # print(left)
+    # print(right)
+    crp_img = image[top: bottom, left: right]
+    return crp_img
+
+# pts = np.array([[2, 1], [3, 2], [2, 3], [1, 2]])
+# print(align_pnts(pts, [2, 2]))
+
+if __name__ == '__main__':
+    image_names = [f for f in listdir(src_images_path) if isfile(join(src_images_path, f))]
+    # categories = []
+
+    for image_name in image_names:
+        image = cv2.imread(join(src_images_path, image_name), cv2.IMREAD_GRAYSCALE)
+        with open(join(src_label_path, image_name.split('.')[0] + '.txt')) as f:
+            labels = f.readlines()
+            for i, label in enumerate(labels):
+                x1, y1, x2, y2, x3, y3, x4, y4, category, _ = label.split(' ')
+                x1, y1, x2, y2, x3, y3, x4, y4 = int(float(x1)), int(float(y1)),int(float(x2)), int(float(y2)),int(float(x3)), int(float(y3)),int(float(x4)), int(float(y4))
+                x = np.zeros(image.shape, dtype=np.uint8)
+                pts = np.array([[x1, y1], [x2, y2],
+                                [x3, y3], [x4, y4]],
+                                np.int32).reshape(-1, 1, 2)
+                mask = cv2.fillPoly(x,[pts],255)
+                object = cv2.bitwise_or(image, image, mask=mask)
+                obj_img = crop_image(object, (x1, y1, x2, y2, x3, y3, x4, y4))
+                or_pts = copy.deepcopy(pts)
+                pathlib.Path(join(dst_unaligned_path, category)).mkdir(parents=True, exist_ok=True)
+                image_final_name = join(dst_unaligned_path, category,
+                                        image_name.split('.')[0] + str(i) + '.' + image_name.split('.')[1])
+                cv2.imwrite(image_final_name, obj_img)
+
+                obj_img = align_image(object, pts.reshape([4, 2]))
+                center = tuple(np.array(image.shape[1::-1]) / 2)
+                pts = align_pnts(pts.reshape([4, 2]), center)
+                y1, x1, y2, x2, y3, x3, y4, x4 = pts.reshape(8)
+                if max(pts.reshape((4, 2))[:,0]) > image.shape[1] or max(pts.reshape((4, 2))[:,1]) > image.shape[0] or min(pts.reshape((8))) < 0:
+                    continue
+                obj_img = crop_image(obj_img, (y1, x1, y2, x2, y3, x3, y4, x4))
+                pathlib.Path(join(dst_aligned_path, category)).mkdir(parents=True, exist_ok=True)
+                image_final_name = join(dst_aligned_path, category,
+                                        image_name.split('.')[0] + str(i) + '.' + image_name.split('.')[1])
+                cv2.imwrite(image_final_name, obj_img)
