@@ -6,6 +6,7 @@ import pathlib
 import math
 import copy
 import argparse
+from tqdm import tqdm
 
 def rotate_image(image, angle):
     image_center = tuple(np.array(image.shape[1::-1]) / 2)
@@ -65,7 +66,7 @@ if __name__ == '__main__':
 
     image_names = [f for f in listdir(src_images_path) if isfile(join(src_images_path, f))]
 
-    for image_name in image_names:
+    for image_name in tqdm(image_names):
         image = cv2.imread(join(src_images_path, image_name), cv2.IMREAD_GRAYSCALE)
         with open(join(src_label_path, image_name.split('.')[0] + '.txt')) as f:
             labels = f.readlines()
