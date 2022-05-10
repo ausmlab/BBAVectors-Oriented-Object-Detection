@@ -5,14 +5,7 @@ import numpy as np
 import pathlib
 import math
 import copy
-
-src_path = '/home/bahman/Documents/codes/York/truck_count/labelling/truck/train/'
-dst_unaligned_path = '/home/bahman/Documents/codes/York/truck_count/re_class/dataset/un'
-dst_aligned_path = '/home/bahman/Documents/codes/York/truck_count/re_class/dataset/al'
-src_images_path = join(src_path, 'images')
-src_label_path = join(src_path, 'labelTxt')
-
-object_margin = 10
+import argparse
 
 def rotate_image(image, angle):
     image_center = tuple(np.array(image.shape[1::-1]) / 2)
@@ -24,8 +17,6 @@ def align_pnts(pts, center):
     delta_x = pts[1, 0] - pts[0, 0]
     delta_y = pts[1, 1] - pts[0, 1]
     theta = math.degrees(np.arctan(delta_y/delta_x))
-    # rotation_mtrx = np.array([[-math.sin(theta), -math.cos(theta)],
-    #                          [math.cos(theta), -math.sin(theta)]])
     rotation_mtrx = cv2.getRotationMatrix2D(center, theta, 1.0)
     shited_pnts = pts.reshape([4, 2])
     newrow = [1 for i in range(4)]
@@ -53,19 +44,26 @@ def crop_image(image, pts):
     right = min([max_x + object_margin, object.shape[1]])
     top = max([min_y - object_margin, 0])
     bottom = min([max_y + object_margin, object.shape[0]])
-    # print(top)
-    # print(bottom)
-    # print(left)
-    # print(right)
     crp_img = image[top: bottom, left: right]
     return crp_img
 
-# pts = np.array([[2, 1], [3, 2], [2, 3], [1, 2]])
-# print(align_pnts(pts, [2, 2]))
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Generates dataset for classification')
+    parser.add_argument('--src_path', type=str, default=None, help='path to DOTA dataset')
+    parser.add_argument('--dst_path', type=str, default=None, help='path to where images should be saved')
+    args = parser.parse_args()
+
+    dst_aligned_path = join(args.dst_path, 'aligned')
+    dst_unaligned_path = join(args.dst_path, 'unaligned')
+    src_path = args.src_path
+
+    src_images_path = join(src_path, 'images')
+    src_label_path = join(src_path, 'labelTxt')
+
+    object_margin = 10
+
     image_names = [f for f in listdir(src_images_path) if isfile(join(src_images_path, f))]
-    # categories = []
 
     for image_name in image_names:
         image = cv2.imread(join(src_images_path, image_name), cv2.IMREAD_GRAYSCALE)
