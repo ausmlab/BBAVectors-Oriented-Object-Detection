@@ -84,6 +84,8 @@ if __name__ == '__main__':
                 pathlib.Path(join(dst_unaligned_path, category)).mkdir(parents=True, exist_ok=True)
                 image_final_name = join(dst_unaligned_path, category,
                                         image_name.split('.')[0] + str(i) + '.' + image_name.split('.')[1])
+                if obj_img.shape[0] < obj_img.shape[1]:
+                    obj_img = cv2.rotate(obj_img, cv2.ROTATE_90_CLOCKWISE)
                 cv2.imwrite(image_final_name, obj_img)
 
                 obj_img = align_image(object, pts.reshape([4, 2]))
@@ -96,4 +98,6 @@ if __name__ == '__main__':
                 pathlib.Path(join(dst_aligned_path, category)).mkdir(parents=True, exist_ok=True)
                 image_final_name = join(dst_aligned_path, category,
                                         image_name.split('.')[0] + str(i) + '.' + image_name.split('.')[1])
+                if obj_img.shape[0] < obj_img.shape[1]:
+                    obj_img = cv2.rotate(obj_img, cv2.ROTATE_90_CLOCKWISE)
                 cv2.imwrite(image_final_name, obj_img)
