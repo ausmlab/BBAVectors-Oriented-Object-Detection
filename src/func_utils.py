@@ -179,9 +179,9 @@ def separate_results_by_file(src_path, dst_path):
                     results[str(preds[0])].append({'score': preds[1], 'pnts': preds[2:]})
 
     for image in results.keys():
-        with open(os.path.join(dst_path, '{}.txt'.format(image)), 'w') as f:
+        with open(os.path.join(dst_path, 'labelTxt', '{}.txt'.format(image)), 'w') as f:
             for i, res in enumerate(results[image]):
-                f.write('{} {:.1f} {:.1f} {:.1f} {:.1f} {:.1f} {:.1f} {:.1f} {:.1f} {}\n'.format(
+                f.write('{} {} {} {} {} {} {} {} {} {}\n'.format(
                     i,
                     res['pnts'][0], res['pnts'][1], res['pnts'][2], res['pnts'][3],
                     res['pnts'][4], res['pnts'][5], res['pnts'][6], res['pnts'][7],

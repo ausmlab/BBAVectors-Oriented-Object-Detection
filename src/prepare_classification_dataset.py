@@ -7,7 +7,6 @@ import math
 import copy
 import argparse
 from tqdm import tqdm
-from prepare_classification_dataset import align_pnts, align_image, crop_image
 
 
 def rotate_image(image, angle, image_center=None):

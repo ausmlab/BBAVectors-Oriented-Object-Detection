@@ -18,11 +18,11 @@ class RCModule(object):
         self.indicators = np.load(indicator)
 
     def align_bbxs(self, args):
-        dst_aligned_path = join(args.dst_path, 'aligned')
-        src_path = args.src_path
+        dst_aligned_path = join(args.dst_path, 'aligned_objs')
+        src_label_path = join(args.dst_path, 'labelTxt')
+        src_path = args.data_dir
         pathlib.Path(dst_aligned_path).mkdir(parents=True, exist_ok=True)
         src_images_path = join(src_path, 'images')
-        src_label_path = join(src_path, 'labelTxt')
 
         image_names = [f for f in listdir(src_images_path) if isfile(join(src_images_path, f))]
 

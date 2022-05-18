@@ -4,13 +4,13 @@ from torch.nn import functional as F
 import numpy as np
 import argparse
 import os
-from datasets import build_dataloader
+from .datasets import build_dataloader
 import random
 from matplotlib import pyplot as plt
 import cv2
-import vgg
+from . import vgg
 from torch import optim as opt
-from cluster.selfrepresentation import ElasticNetSubspaceClustering
+from .cluster.selfrepresentation import ElasticNetSubspaceClustering
 
 parser = argparse.ArgumentParser()
 
@@ -24,7 +24,7 @@ dataset_group.add_argument("--batch_size", type=int, default=16, help="batch siz
 # dataset_group.add_argument("--height", type=int, default=60, help="height")
 dataset_group.add_argument("--size", type=int, default=180, help="image size")
 dataset_group.add_argument("--nthreads", type=str, default=8, help="nthreads")
-args = parser.parse_args()
+
 
 class DisLoss(nn.Module):
     def __init__(self):
@@ -532,6 +532,7 @@ def train_attnandcnn():
 
 
 if __name__=="__main__":
+    args = parser.parse_args()
     seed_torch()
     dataloader_train, dataloader_val, dataset_train, dataset_val, num_classes, n_iter_per_epoch_train = build_dataloader(
         args)
