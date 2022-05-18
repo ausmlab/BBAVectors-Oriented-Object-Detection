@@ -7,12 +7,16 @@ import math
 import copy
 import argparse
 from tqdm import tqdm
+from prepare_classification_dataset import align_pnts, align_image, crop_image
 
-def rotate_image(image, angle):
-    image_center = tuple(np.array(image.shape[1::-1]) / 2)
+
+def rotate_image(image, angle, image_center=None):
+    if image_center is None:
+        image_center = tuple(np.array(image.shape[1::-1]) / 2)
     rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
     result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
     return result
+
 
 def align_pnts(pts, center):
     delta_x = pts[1, 0] - pts[0, 0]
@@ -27,13 +31,19 @@ def align_pnts(pts, center):
 
     return readjusted_pnts.astype(int)
 
-def align_image(image, pts):
+
+def align_image(image, pts, obj_center=False):
     # This is assuming the point are from top left and clockwise:
     delta_x = pts[1, 0] - pts[0, 0]
     delta_y = pts[1, 1] - pts[0, 1]
     theta = math.degrees(np.arctan(delta_y/delta_x))
-    image = rotate_image(image, theta)
+    if obj_center:
+        rotation_center = tuple(np.array([pts[1, 0] + pts[0, 0], pts[1, 1] + pts[0, 1]])/2)
+    else:
+        rotation_center = None
+    image = rotate_image(image, theta, rotation_center)
     return image
+
 
 def crop_image(image, pts):
     x1, y1, x2, y2, x3, y3, x4, y4 = pts

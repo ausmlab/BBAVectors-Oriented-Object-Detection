@@ -13,7 +13,6 @@ class EvalModule(object):
         self.decoder = decoder
         self.classnames = classnames
 
-
     def load_model(self, model, resume):
         checkpoint = torch.load(resume, map_location=lambda storage, loc: storage)
         print('loaded weights from {}, epoch {}'.format(resume, checkpoint['epoch']))
@@ -22,12 +21,12 @@ class EvalModule(object):
         return model
 
     def evaluation(self, args, down_ratio):
-        save_path = '/BBAV/models/' + 'weights_'+args.dataset
+        save_path = '/BBAV/models/' + 'weights_' + args.dataset
         self.model = self.load_model(self.model, os.path.join(save_path, args.resume))
         self.model = self.model.to(self.device)
         self.model.eval()
 
-        result_path = '/BBAV/models/' + 'result_'+args.dataset
+        result_path = '/BBAV/models/' + 'result_' + args.dataset
         if not os.path.exists(result_path):
             os.mkdir(result_path)
 
@@ -49,7 +48,7 @@ class EvalModule(object):
                                  print_ps=True)
 
         if args.dataset == 'dota':
-            merge_path = '/BBAV/models/' + 'merge_'+args.dataset
+            merge_path = '/BBAV/models/' + 'merge_' + args.dataset
             if not os.path.exists(merge_path):
                 os.mkdir(merge_path)
             dsets.merge_crop_image_results(result_path, merge_path)
@@ -57,3 +56,4 @@ class EvalModule(object):
         else:
             ap = dsets.dec_evaluation(result_path)
             return ap
+

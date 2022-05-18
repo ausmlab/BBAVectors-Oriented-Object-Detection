@@ -7,12 +7,16 @@ FROM pytorch/pytorch:1.6.0-cuda10.1-cudnn7-runtime
 ### Install dependencies  ###
 #############################
 
+COPY reqs.txt reqs.txt
+
 # Install Open-CV 4.3.0 & dotadevkit && pytorch 1.6
 RUN apt-get update && \
     apt-get install ffmpeg libsm6 libxext6  -y
 RUN conda install -c conda-forge opencv=4.3.0 && \
-    pip install dotadevkit &&
-    pip install tensorboard
+    conda install -c conda-forge python-spams && \
+    pip install dotadevkit && \
+    pip install tensorboard && \
+    pip install -r reqs.txt
 
 WORKDIR /BBAV
 RUN mkdir models

@@ -7,6 +7,9 @@ from datasets.dataset_hrsc import HRSC
 from models import ctrbox_net
 import decoder
 import os
+import func_utils
+
+# from reclassification.MACNN import MACNN
 
 
 def parse_args():
@@ -18,8 +21,8 @@ def parse_args():
     parser.add_argument('--init_lr', type=float, default=1.25e-4, help='Initial learning rate')
     parser.add_argument('--input_h', type=int, default=608, help='Resized image height')
     parser.add_argument('--input_w', type=int, default=608, help='Resized image width')
-    parser.add_argument('--K', type=int, default=500, help='Maximum of objects')
     parser.add_argument('--conf_thresh', type=float, default=0.18, help='Confidence threshold, 0.1 for general evaluation')
+    parser.add_argument('--K', type=int, default=500, help='Maximum of objects')
     parser.add_argument('--ngpus', type=int, default=1, help='Number of gpus, ngpus>1 for multigpu')
     parser.add_argument('--resume_train', type=str, default='', help='Weights resumed in training')
     parser.add_argument('--resume', type=str, default='model_50.pth', help='Weights resumed in testing and evaluation')
@@ -36,6 +39,11 @@ def parse_args():
     parser.add_argument('--eval_w_train', action='store_true', help='Whether to perform evaluation while training (to check overfitting)')
     parser.add_argument('--eval_data_dir', type=str, default='/BBAV/DS/val1024', help='Directory pointing to evaluation data')
     parser.add_argument('--log_dir', type=str, default='/BBAV/logs', help='where to save tensorboard logs')
+
+    parser.add_argument('--rcm', action='store_true', help='whether or not the objects should be re-classified by a separate model')
+    parser.add_argument('--rcm_path', type=str, default='', help='model weights for classifying objects separately')
+    parser.add_argument('--src_path', type=str, default='')
+    parser.add_argument('--dst_path', type=str, default='')
 
     args = parser.parse_args()
     return args
@@ -74,6 +82,11 @@ if __name__ == '__main__':
     decoder = decoder.DecDecoder(K=args.K,
                                  conf_thresh=args.conf_thresh,
                                  num_classes=num_classes[args.dataset])
+    if args.rcm:
+        rcm = MACNN()
+    else:
+        rcm = None
+
     if args.phase == 'train':
         ctrbox_obj = train.TrainModule(dataset=dataset,
                                        num_classes=num_classes,
@@ -86,6 +99,8 @@ if __name__ == '__main__':
     elif args.phase == 'test':
         ctrbox_obj = test.TestModule(dataset=dataset, num_classes=num_classes, model=model, decoder=decoder, save_dir=args.test_save_dir, mode=args.test_mode, classnames=classnames)
         ctrbox_obj.test(args, down_ratio=down_ratio)
-    else:
-        ctrbox_obj = eval.EvalModule(dataset=dataset, num_classes=num_classes, model=model, decoder=decoder, classnames=classnames)
+    elif args.phase == 'eval':
+        ctrbox_obj = eval.EvalModule(dataset=dataset, num_classes=num_classes, model=model, decoder=decoder, classnames=classnames, rcm=rcm)
         ctrbox_obj.evaluation(args, down_ratio=down_ratio)
+    elif args.phase == 'reclassify':
+        func_utils.separate_results_by_file(args.src_path, args.dst_path)

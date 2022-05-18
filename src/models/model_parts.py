@@ -2,6 +2,7 @@ import torch.nn.functional as F
 import torch.nn as nn
 import torch
 
+
 class CombinationModule(nn.Module):
     def __init__(self, c_low, c_up, batch_norm=False, group_norm=False, instance_norm=False):
         super(CombinationModule, self).__init__()
