@@ -2,6 +2,7 @@ import argparse
 import train
 import test
 import eval
+import reclassify
 from datasets.dataset_dota import DOTA
 from datasets.dataset_hrsc import HRSC
 from models import ctrbox_net
@@ -104,3 +105,5 @@ if __name__ == '__main__':
         ctrbox_obj.evaluation(args, down_ratio=down_ratio)
     elif args.phase == 'reclassify':
         func_utils.separate_results_by_file(args.src_path, args.dst_path)
+        ctrbox_obj = reclassify.RCModule(None, None)
+        ctrbox_obj.align_bbxs(args)
