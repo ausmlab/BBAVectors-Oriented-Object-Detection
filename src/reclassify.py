@@ -1,5 +1,5 @@
 import torch
-from reclassification.MACNN import clustering
+from reclassification.MACNN import clustering, datasets
 from prepare_classification_dataset import crop_image, align_image, align_pnts
 from os import listdir, mkdir
 from os.path import isfile, join, exists
@@ -11,11 +11,11 @@ import copy
 import argparse
 from tqdm import tqdm
 
+
 class RCModule(object):
-    def __init__(self, model, indicator):
+    def __init__(self, model, indicator_):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.model = model
-        self.indicators = np.load(indicator)
 
     def align_bbxs(self, args):
         dst_aligned_path = join(args.dst_path, 'aligned_objs')
@@ -44,7 +44,7 @@ class RCModule(object):
 
                     obj_img = align_image(object, pts.reshape([4, 2]), obj_center=True)
                     pts_ = pts.reshape([4, 2])
-                    center = tuple(np.array([pts_[1, 0] + pts_[0, 0], pts_[1, 1] + pts_[0, 1]])/2)
+                    center = tuple(np.array([pts_[1, 0] + pts_[0, 0], pts_[1, 1] + pts_[0, 1]]) / 2)
                     pts = align_pnts(pts.reshape([4, 2]), center)
 
                     y1, x1, y2, x2, y3, x3, y4, x4 = pts.reshape(8)
@@ -57,29 +57,19 @@ class RCModule(object):
                     cv2.imwrite(image_final_name, obj_img)
 
     def reclassify(self, args):
-        indicators_list = clustering(self.indicators)
         self.model.load_state_dict(torch.load(args.model_path))
+        self.model.to(self.device)
+        dataloader_val, dataset_val = datasets.build_val_dataloader(args)
 
-        object_margin = 10
-        image_names = [f for f in listdir(args.src_path) if isfile(join(args.lable_dir, f))]
-
-        for image_name in tqdm(image_names):
-            image = cv2.imread(join(args.data_dir, image_name))
-            with open(join(args.lable_dir, image_name.split('.')[0] + '.txt')) as f:
-                labels = f.readlines()
-                for i, label in enumerate(labels):
-                    x1, y1, x2, y2, x3, y3, x4, y4, category, _ = label.split(' ')
-                    x1, y1, x2, y2, x3, y3, x4, y4 = int(float(x1)), int(float(y1)),int(float(x2)), int(float(y2)),int(float(x3)), int(float(y3)),int(float(x4)), int(float(y4))
-                    x = np.zeros(image.shape[:2], dtype=np.uint8)
-                    pts = np.array([[x1, y1], [x2, y2],
-                                    [x3, y3], [x4, y4]],
-                                    np.int32).reshape(-1, 1, 2)
-                    mask = cv2.fillPoly(x,[pts],255)
-                    object = cv2.bitwise_or(image, image, mask=mask)
-                    obj_img = align_image(object, pts.reshape([4, 2]))
-                    center = tuple(np.array(image.shape[1::-1]) / 2)
-                    pts = align_pnts(pts.reshape([4, 2]), center)
-                    y1, x1, y2, x2, y3, x3, y4, x4 = pts.reshape(8)
-                    if max(pts.reshape((4, 2))[:,0]) > image.shape[1] or max(pts.reshape((4, 2))[:,1]) > image.shape[0] or min(pts.reshape((8))) < 0:
-                        continue
-                    obj_img = crop_image(obj_img, (y1, x1, y2, x2, y3, x3, y4, x4))
+        with open(join(args.dst_path, 'output.txt')) as f:
+            for idx, (data, _) in enumerate(dataloader_val):
+                data = data.cuda()
+                _, _, _, _, _, preds = self.model(data)
+                final_preds = preds[:, -1]
+                B = data.size(0)
+                data_fnames, _ = dataloader_val.dataset.samples[idx]
+                for b in range(B):
+                    data_fname = data_fnames[b]
+                    pred = final_preds[b]
+                    f.write('{fname} {id} {pred}\n'.format(fname=data_fname.split('_')[0],
+                                                           id=data_fname.split('_')[1].split('.')[0]), pred=pred)

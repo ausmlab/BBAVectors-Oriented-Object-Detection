@@ -5,7 +5,7 @@ from os.path import isfile, join
 import torch
 import numpy as np
 from datasets.DOTA_devkit.ResultMerge_multi_process import py_cpu_nms_poly_fast, py_cpu_nms_poly
-
+import pathlib
 
 def decode_prediction(predictions, dsets, args, img_id, down_ratio):
     predictions = predictions[0, :, :]
@@ -172,12 +172,12 @@ def separate_results_by_file(src_path, dst_path):
         with open(join(src_path, cat)) as f:
             cat_predictions = f.readlines()
             for pred in cat_predictions:
-                preds = pred.split(' ')
+                preds = pred.strip('\n').split(' ')
                 if str(preds[0]) not in results:
                     results[str(preds[0])] = [{'score': preds[1], 'pnts': preds[2:]}]
                 else:
                     results[str(preds[0])].append({'score': preds[1], 'pnts': preds[2:]})
-
+    pathlib.Path(os.path.join(dst_path, 'labelTxt')).mkdir(parents=True, exist_ok=True)
     for image in results.keys():
         with open(os.path.join(dst_path, 'labelTxt', '{}.txt'.format(image)), 'w') as f:
             for i, res in enumerate(results[image]):

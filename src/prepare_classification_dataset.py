@@ -44,16 +44,16 @@ def align_image(image, pts, obj_center=False):
     return image
 
 
-def crop_image(image, pts):
+def crop_image(image, pts, object_margin=10):
     x1, y1, x2, y2, x3, y3, x4, y4 = pts
     max_y = max([y1, y2, y3, y4])
     min_y = min([y1, y2, y3, y4])
     max_x = max([x1, x2, x3, x4])
     min_x = min([x1, x2, x3, x4])
     left = max([min_x - object_margin, 0])
-    right = min([max_x + object_margin, object.shape[1]])
+    right = min([max_x + object_margin, image.shape[1]])
     top = max([min_y - object_margin, 0])
-    bottom = min([max_y + object_margin, object.shape[0]])
+    bottom = min([max_y + object_margin, image.shape[0]])
     crp_img = image[top: bottom, left: right]
     return crp_img
 

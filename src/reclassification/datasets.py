@@ -54,7 +54,6 @@ def build_transform(args,is_train=True):
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
-
     return transform
 
 def build_dataloader(args):
@@ -75,3 +74,13 @@ def build_dataloader(args):
 
     return dataloader_train,dataloader_val,dataset_train,dataset_val,\
            num_classes,n_iter_per_epoch_train
+
+
+def build_val_dataloader(args, nthreads=8):
+    transform_val = build_transform(args, is_train=False)
+    dataset_val = ImageFolder(os.path.join(args.data_dir, "val"),
+                              transform_val)
+    dataloader_val = DataLoader(dataset_val, batch_size=8,
+                                  shuffle=False, num_workers=nthreads)
+
+    return dataloader_val, dataset_val
