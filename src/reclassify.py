@@ -1,5 +1,5 @@
 import torch
-from reclassification.MACNN import clustering, datasets
+from reclassification import datasets
 from prepare_classification_dataset import crop_image, align_image, align_pnts
 from os import listdir, mkdir
 from os.path import isfile, join, exists
@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 
 class RCModule(object):
-    def __init__(self, model, indicator_):
+    def __init__(self, model):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.model = model
 

@@ -9,8 +9,8 @@ from models import ctrbox_net
 import decoder
 import os
 import func_utils
+from reclassification.MACNN import MACNN
 
-# from reclassification.MACNN import MACNN
 
 
 def parse_args():
@@ -41,10 +41,10 @@ def parse_args():
     parser.add_argument('--eval_data_dir', type=str, default='/BBAV/DS/val1024', help='Directory pointing to evaluation data')
     parser.add_argument('--log_dir', type=str, default='/BBAV/logs', help='where to save tensorboard logs')
 
-    parser.add_argument('--rcm', action='store_true', help='whether or not the objects should be re-classified by a separate model')
-    parser.add_argument('--rcm_path', type=str, default='', help='model weights for classifying objects separately')
     parser.add_argument('--src_path', type=str, default='')
     parser.add_argument('--dst_path', type=str, default='')
+    parser.add_argument('--model_path', type=str, default='')
+    parser.add_argument('--size', type=int, default='')
 
     args = parser.parse_args()
     return args
@@ -83,10 +83,6 @@ if __name__ == '__main__':
     decoder = decoder.DecDecoder(K=args.K,
                                  conf_thresh=args.conf_thresh,
                                  num_classes=num_classes[args.dataset])
-    if args.rcm:
-        rcm = MACNN()
-    else:
-        rcm = None
 
     if args.phase == 'train':
         ctrbox_obj = train.TrainModule(dataset=dataset,
@@ -105,5 +101,7 @@ if __name__ == '__main__':
         ctrbox_obj.evaluation(args, down_ratio=down_ratio)
     elif args.phase == 'reclassify':
         func_utils.separate_results_by_file(args.src_path, args.dst_path)
-        ctrbox_obj = reclassify.RCModule(None, None)
-        ctrbox_obj.align_bbxs(args)
+        model = MACNN()
+        ctrbox_obj = reclassify.RCModule(model)
+        # ctrbox_obj.align_bbxs(args)
+        ctrbox_obj.reclassify(args)

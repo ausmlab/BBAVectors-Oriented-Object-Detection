@@ -78,9 +78,24 @@ def build_dataloader(args):
 
 def build_val_dataloader(args, nthreads=8):
     transform_val = build_transform(args, is_train=False)
-    dataset_val = ImageFolder(os.path.join(args.data_dir, "val"),
+    dataset_val = CustomDataset(os.path.join(args.data_dir, "val"),
                               transform_val)
     dataloader_val = DataLoader(dataset_val, batch_size=8,
                                   shuffle=False, num_workers=nthreads)
 
     return dataloader_val, dataset_val
+
+
+class CustomDataset(ImageFolder):
+    def __init__(self, root, transform):
+        super().__init__(root, transform)
+
+    def __getitem__(self, index):
+        path, target = self.samples[index]
+        sample = self.loader(path)
+        if self.transform is not None:
+            sample = self.transform(sample)
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+
+        return sample, target, path
