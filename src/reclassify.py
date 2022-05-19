@@ -60,16 +60,16 @@ class RCModule(object):
         self.model.load_state_dict(torch.load(args.model_path))
         self.model.to(self.device)
         dataloader_val, dataset_val = datasets.build_val_dataloader(args)
-
+        class_to_idx = dataset_val.class_to_idx
+        idx_to_class = {v: k for k, v in class_to_idx.items()}
         with open(join(args.dst_path, 'output.txt')) as f:
-            for idx, (data, _) in enumerate(dataloader_val):
+            for idx, (data, _, fnames) in enumerate(dataloader_val):
                 data = data.cuda()
                 _, _, _, _, _, preds = self.model(data)
-                final_preds = preds[:, -1]
+                final_preds = torch.argmax(preds[-1], dim=1)
                 B = data.size(0)
-                data_fnames, _ = dataloader_val.dataset.samples[idx]
                 for b in range(B):
-                    data_fname = data_fnames[b]
-                    pred = final_preds[b]
-                    f.write('{fname} {id} {pred}\n'.format(fname=data_fname.split('_')[0],
-                                                           id=data_fname.split('_')[1].split('.')[0]), pred=pred)
+                    pred = idx_to_class[final_preds[b]]
+                    fname = fnames[b].split('_')[0]
+                    id = fnames[b].split('_')[1].split('.')[0]
+                    f.write('{fname} {id} {pred}\n'.format(fname=fname, id=id, pred=pred))
