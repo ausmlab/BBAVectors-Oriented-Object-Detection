@@ -7,7 +7,7 @@ from datasets.dataset_dota import DOTA
 from datasets.dataset_hrsc import HRSC
 from models import ctrbox_net
 import decoder
-import os
+from os.path import join
 import func_utils
 from reclassification.MACNN import MACNN
 
@@ -105,3 +105,4 @@ if __name__ == '__main__':
         ctrbox_obj = reclassify.RCModule(model)
         # ctrbox_obj.align_bbxs(args)
         ctrbox_obj.reclassify(args)
+        ctrbox_obj.make_evaluation_files(join(args.dst_path, 'merge_dota'), join(args.dst_path, 'labelTxt'))

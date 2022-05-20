@@ -147,6 +147,7 @@ class SELayer(nn.Module):
 class MACNN(nn.Module):
     def __init__(self):
         super(MACNN,self).__init__()
+        self.num_of_heads = 3
         self.vgg=vgg.vgg19(True)
         self.feat_dims = 512
         self.se1 = SELayer(self.feat_dims)
@@ -156,13 +157,13 @@ class MACNN(nn.Module):
 
         self.pool=nn.AdaptiveAvgPool2d(1)
 
-        self.cnnfc=nn.Linear(self.feat_dims, 200)
+        self.cnnfc=nn.Linear(self.feat_dims, self.num_of_heads)
 
-        self.fc1 = nn.Linear(self.feat_dims, 200)
-        self.fc2 = nn.Linear(self.feat_dims, 200)
-        self.fc3 = nn.Linear(self.feat_dims, 200)
-        self.fc4 = nn.Linear(self.feat_dims, 200)
-        self.fcall=nn.Linear(5*self.feat_dims,200)
+        self.fc1 = nn.Linear(self.feat_dims, self.num_of_heads)
+        self.fc2 = nn.Linear(self.feat_dims, self.num_of_heads)
+        self.fc3 = nn.Linear(self.feat_dims, self.num_of_heads)
+        self.fc4 = nn.Linear(self.feat_dims, self.num_of_heads)
+        self.fcall=nn.Linear(5*self.feat_dims,self.num_of_heads)
 
     def forward(self,x):
         feat_maps = self.vgg(x)
@@ -336,6 +337,22 @@ def pretrain_attn():
             if idx%10==0:
                 print("epoch:{},idx:{},lr:{:.6f},loss:{:.8f}".format(epoch,idx,optimizer.param_groups[0]["lr"],loss.item()))
         lr_scheduler.step()
+
+
+def cacl_acc():
+    num_corrects_val = 0
+    num_total = 0
+    for idx, (data, label) in enumerate(dataloader_val):
+        data = data.cuda()
+        label = label.cuda()
+        _, _, _, _, _, preds = model(data)
+        pred = preds.argmax(dim=1)
+        num_corrects_val += torch.eq(pred, label).float().sum().item()
+        num_total += data.size(0)
+    print(num_total)
+    print (num_corrects_val)
+    print(num_total/num_corrects_val)
+
 
 def vis(draw_imgs=2):
     mean = [0.485, 0.456, 0.406]

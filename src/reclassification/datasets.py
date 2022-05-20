@@ -47,10 +47,10 @@ class NewPad(object):
             format(self.fill, self.padding_mode)
 
 
-def build_transform(args,is_train=True):
+def build_transform(size,is_train=True):
     transform = transforms.Compose([
         NewPad(),
-        transforms.Resize([args.size, args.size]),
+        transforms.Resize([size, size]),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
@@ -76,9 +76,9 @@ def build_dataloader(args):
            num_classes,n_iter_per_epoch_train
 
 
-def build_val_dataloader(args, nthreads=8):
-    transform_val = build_transform(args, is_train=False)
-    dataset_val = CustomDataset(os.path.join(args.data_dir, "val"),
+def build_val_dataloader(data_dir, size, nthreads=8):
+    transform_val = build_transform(size, is_train=False)
+    dataset_val = CustomDataset(data_dir,
                               transform_val)
     dataloader_val = DataLoader(dataset_val, batch_size=8,
                                   shuffle=False, num_workers=nthreads)

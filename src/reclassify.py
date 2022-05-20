@@ -1,3 +1,5 @@
+import os
+
 import torch
 from reclassification import datasets
 from prepare_classification_dataset import crop_image, align_image, align_pnts
@@ -16,9 +18,12 @@ class RCModule(object):
     def __init__(self, model):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.model = model
+        self.results = {}
+        self.idx_to_class = {0: 'car', 1: 'other', 2: 'truck'}
+        self.classes = ['car', 'other', 'truck']
 
     def align_bbxs(self, args):
-        dst_aligned_path = join(args.dst_path, 'aligned_objs')
+        dst_aligned_path = join(args.dst_path, 'aligned_objs', 'unlabeled')
         src_label_path = join(args.dst_path, 'labelTxt')
         src_path = args.data_dir
         pathlib.Path(dst_aligned_path).mkdir(parents=True, exist_ok=True)
@@ -59,17 +64,44 @@ class RCModule(object):
     def reclassify(self, args):
         self.model.load_state_dict(torch.load(args.model_path))
         self.model.to(self.device)
-        dataloader_val, dataset_val = datasets.build_val_dataloader(args)
-        class_to_idx = dataset_val.class_to_idx
-        idx_to_class = {v: k for k, v in class_to_idx.items()}
-        with open(join(args.dst_path, 'output.txt')) as f:
+        dataloader_val, dataset_val = datasets.build_val_dataloader(join(args.dst_path, 'aligned_objs'), args.size)
+        # class_to_idx = dataset_val.class_to_idx
+        # idx_to_class = {v: k for k, v in class_to_idx.items()}
+        with open(join(args.dst_path, 'output.txt'), 'w') as f:
             for idx, (data, _, fnames) in enumerate(dataloader_val):
                 data = data.cuda()
                 _, _, _, _, _, preds = self.model(data)
                 final_preds = torch.argmax(preds[-1], dim=1)
                 B = data.size(0)
                 for b in range(B):
-                    pred = idx_to_class[final_preds[b]]
-                    fname = fnames[b].split('_')[0]
-                    id = fnames[b].split('_')[1].split('.')[0]
+                    pred = final_preds[b]
+                    fname_id = fnames[b].split('/')[-1]
+                    fname = fname_id.split('_')[0]
+                    id = fname_id.split('_')[1].split('.')[0]
                     f.write('{fname} {id} {pred}\n'.format(fname=fname, id=id, pred=pred))
+                    if fname in self.results:
+                        self.results[fname][str(id)] = pred.item()
+                    else:
+                        self.results[fname] = {str(id): pred.item()}
+
+    def make_evaluation_files(self, dst_path, coords_path):
+        pathlib.Path(dst_path).mkdir(parents=True, exist_ok=True)
+        dota_format_results = {classname: [] for classname in self.classes}
+        filenames = [f for f in os.listdir(coords_path) if isfile(join(coords_path, f))]
+        for filename in filenames:
+            with open(join(coords_path, filename), 'r') as f:
+                lines = f.readlines()
+                for line in lines:
+                    words = line.strip('\n').split(' ')
+                    id = words[0]
+                    score = words[-1]
+                    coords = words[1:-1]
+                    category = self.idx_to_class[self.results[filename.split('.')[0]][id]]
+                    dota_result = [filename.split('.')[0], score]
+                    dota_result.extend(coords)
+                    dota_format_results[category].append(dota_result)
+        for category in self.classes:
+            with open(join(dst_path, 'Task1_{cat}.txt'.format(cat=category)), 'w') as f:
+                for pred in dota_format_results[category]:
+                    f.write('{} {} {} {} {} {} {} {} {} {}\n'.format(pred[0], pred[1], pred[2], pred[3], pred[4], pred[5],
+                                                                   pred[6], pred[7], pred[8], pred[9]))
