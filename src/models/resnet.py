@@ -213,8 +213,8 @@ class ResNet(nn.Module):
         feat.append(x)       # C3
         x = self.layer3(x)
         feat.append(x)       # C4
-        x = self.layer4(x)
-        feat.append(x)       # C5
+        # x = self.layer4(x)
+        # feat.append(x)       # C5
 
 
         # x = self.avgpool(x)
