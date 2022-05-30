@@ -6,6 +6,8 @@ import torch
 import numpy as np
 from datasets.DOTA_devkit.ResultMerge_multi_process import py_cpu_nms_poly_fast, py_cpu_nms_poly
 import pathlib
+from distutils.dir_util import copy_tree
+
 
 def decode_prediction(predictions, dsets, args, img_id, down_ratio):
     predictions = predictions[0, :, :]
@@ -219,3 +221,20 @@ def separate_results_by_file(src_path, dst_path):
                     res['pnts'][0], res['pnts'][1], res['pnts'][2], res['pnts'][3],
                     res['pnts'][4], res['pnts'][5], res['pnts'][6], res['pnts'][7],
                     res['score']))
+
+
+def merge_classes(src_path, dst_path, new_class_name='object'):
+    pathlib.Path(dst_path).mkdir(parents=True, exist_ok=True)
+    label_files = [f for f in listdir(src_path) if isfile(join(src_path, f))]
+    for label_file in label_files:
+        with open(join(src_path, label_file)) as f_in:
+            labels = f_in.readlines()
+            dst_file = join(dst_path, label_file)
+            with open(dst_file, 'w') as f_out:
+                for label in labels:
+                    words = label.strip('\n').split(' ')
+                    co_ordinations = words[:-2]
+                    difficulty = words[-1]
+                    ' '.join(co_ordinations)
+                    new_label = '{} {} {}\n'.format(co_ordinations, new_class_name, difficulty)
+                    f_out.write(new_label)
