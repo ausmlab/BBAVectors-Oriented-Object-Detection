@@ -44,7 +44,7 @@ def parse_args():
     parser.add_argument('--src_path', type=str, default='')
     parser.add_argument('--dst_path', type=str, default='')
     parser.add_argument('--model_path', type=str, default='')
-    parser.add_argument('--size', type=int, default='')
+    parser.add_argument('--size', type=int, default=180)
 
     args = parser.parse_args()
     return args
@@ -97,12 +97,12 @@ if __name__ == '__main__':
         ctrbox_obj = test.TestModule(dataset=dataset, num_classes=num_classes, model=model, decoder=decoder, save_dir=args.test_save_dir, mode=args.test_mode, classnames=classnames)
         ctrbox_obj.test(args, down_ratio=down_ratio)
     elif args.phase == 'eval':
-        ctrbox_obj = eval.EvalModule(dataset=dataset, num_classes=num_classes, model=model, decoder=decoder, classnames=classnames, rcm=rcm)
+        ctrbox_obj = eval.EvalModule(dataset=dataset, num_classes=num_classes, model=model, decoder=decoder, classnames=classnames)
         ctrbox_obj.evaluation(args, down_ratio=down_ratio)
     elif args.phase == 'reclassify':
         func_utils.separate_results_by_file(args.src_path, args.dst_path)
         model = MACNN()
         ctrbox_obj = reclassify.RCModule(model)
-        # ctrbox_obj.align_bbxs(args)
+        ctrbox_obj.align_bbxs(args)
         ctrbox_obj.reclassify(args)
         ctrbox_obj.make_evaluation_files(join(args.dst_path, 'merge_dota'), join(args.dst_path, 'labelTxt'))

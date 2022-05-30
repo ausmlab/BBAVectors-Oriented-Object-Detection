@@ -45,7 +45,8 @@ class EvalModule(object):
                                  self.device,
                                  self.decoder,
                                  result_path,
-                                 print_ps=True)
+                                 print_ps=True,
+                                 nms_over_all=True)
 
         if args.dataset == 'dota':
             merge_path = '/BBAV/models/' + 'merge_' + args.dataset

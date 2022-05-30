@@ -75,6 +75,20 @@ def non_maximum_suppression(pts, scores):
     return nms_item[keep_index]
 
 
+def non_maximum_suppression_over_all(pts, scores, cats):
+    nms_item = np.concatenate([pts[:, 0:1, 0],
+                               pts[:, 0:1, 1],
+                               pts[:, 1:2, 0],
+                               pts[:, 1:2, 1],
+                               pts[:, 2:3, 0],
+                               pts[:, 2:3, 1],
+                               pts[:, 3:4, 0],
+                               pts[:, 3:4, 1],
+                               scores[:, np.newaxis]], axis=1)
+    nms_item = np.asarray(nms_item, np.float64)
+    keep_index = py_cpu_nms_poly_fast(dets=nms_item, thresh=0.1)
+    return nms_item[keep_index], [cats[i] for i in keep_index]
+
 def write_results(args,
                   model,
                   dsets,
@@ -82,7 +96,8 @@ def write_results(args,
                   device,
                   decoder,
                   result_path,
-                  print_ps=False):
+                  print_ps=False,
+                  nms_over_all=False):
     results = {cat: {img_id: [] for img_id in dsets.img_ids} for cat in dsets.category}
     for index in range(len(dsets)):
         data_dict = dsets.__getitem__(index)
@@ -101,21 +116,39 @@ def write_results(args,
         pts0, scores0 = decode_prediction(predictions, dsets, args, img_id, down_ratio)
         decoded_pts.append(pts0)
         decoded_scores.append(scores0)
-
         # nms
-        for cat in dsets.category:
-            if cat == 'background':
-                continue
-            pts_cat = []
-            scores_cat = []
-            for pts0, scores0 in zip(decoded_pts, decoded_scores):
-                pts_cat.extend(pts0[cat])
-                scores_cat.extend(scores0[cat])
-            pts_cat = np.asarray(pts_cat, np.float32)
-            scores_cat = np.asarray(scores_cat, np.float32)
-            if pts_cat.shape[0]:
-                nms_results = non_maximum_suppression(pts_cat, scores_cat)
-                results[cat][img_id].extend(nms_results)
+        if nms_over_all:
+            pts_all = []
+            scores_all = []
+            cats_all = []
+            for cat in dsets.category:
+                if cat == 'background':
+                    continue
+                for pts0, scores0 in zip(decoded_pts, decoded_scores):
+                    cats_all.extend([cat for pt in pts0[cat]])
+                    pts_all.extend(pts0[cat])
+                    scores_all.extend(scores0[cat])
+            pts_all = np.asarray(pts_all, np.float32)
+            scores_all = np.asarray(scores_all, np.float32)
+            if pts_all.shape[0]:
+                nms_results, cats_results = non_maximum_suppression_over_all(pts_all, scores_all, cats_all)
+            for nms_result, cats_result in zip(nms_results, cats_results):
+                results[cats_result][img_id].append(nms_result)
+
+        else:
+            for cat in dsets.category:
+                if cat == 'background':
+                    continue
+                pts_cat = []
+                scores_cat = []
+                for pts0, scores0 in zip(decoded_pts, decoded_scores):
+                    pts_cat.extend(pts0[cat])
+                    scores_cat.extend(scores0[cat])
+                pts_cat = np.asarray(pts_cat, np.float32)
+                scores_cat = np.asarray(scores_cat, np.float32)
+                if pts_cat.shape[0]:
+                    nms_results = non_maximum_suppression(pts_cat, scores_cat)
+                    results[cat][img_id].extend(nms_results)
         if print_ps:
             print('testing {}/{} data {}'.format(index + 1, len(dsets), img_id))
 

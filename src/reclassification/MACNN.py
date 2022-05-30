@@ -12,6 +12,10 @@ from . import vgg
 from torch import optim as opt
 from .cluster.selfrepresentation import ElasticNetSubspaceClustering
 
+from sklearn.metrics import confusion_matrix
+import seaborn as sn
+import pandas as pd
+
 parser = argparse.ArgumentParser()
 
 # dataset
@@ -25,6 +29,29 @@ dataset_group.add_argument("--batch_size", type=int, default=16, help="batch siz
 dataset_group.add_argument("--size", type=int, default=180, help="image size")
 dataset_group.add_argument("--nthreads", type=str, default=8, help="nthreads")
 
+
+def conf_mtrx():
+    y_pred = []
+    y_true = []
+    # iterate over test data
+    for idx, (data, label) in enumerate(dataloader_val):
+        data = data.cuda()
+        _, _, _, _, _, preds = model(data)
+        preds = preds.argmax(dim=1).cpu().numpy()
+        y_pred.extend(preds)  # Save Prediction
+        labels = labels.data.cpu().numpy()
+        y_true.extend(labels)  # Save Truth
+
+    # constant for classes
+    classes = ('car', 'others', 'truck')
+
+    # Build confusion matrix
+    cf_matrix = confusion_matrix(y_true, y_pred)
+    df_cm = pd.DataFrame(cf_matrix / np.sum(cf_matrix) * 10, index=[i for i in classes],
+                         columns=[i for i in classes])
+    plt.figure(figsize=(12, 7))
+    sn.heatmap(df_cm, annot=True)
+    plt.savefig('outputs/conf_mtrx.png')
 
 class DisLoss(nn.Module):
     def __init__(self):
@@ -339,7 +366,7 @@ def pretrain_attn():
         lr_scheduler.step()
 
 
-def cacl_acc():
+def calc_acc():
     num_corrects_val = 0
     num_total = 0
     for idx, (data, label) in enumerate(dataloader_val):
