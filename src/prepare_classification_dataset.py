@@ -32,7 +32,14 @@ def align_pnts(pts, center):
     return readjusted_pnts.astype(int)
 
 
-def align_image(image, pts, obj_center=False):
+def align_image(image, pts, obj_center=False, enforce_upright=True):
+    """
+    @param enforce_upright: if the front of box is facing down, will re-align
+    it, so it will be facing up.
+    @param image: this is a second param
+    @param pts: points in bounding box, in clockwise order, starting
+    from front-left side of box
+    """
     # This is assuming the point are from top left and clockwise:
     delta_x = pts[1, 0] - pts[0, 0]
     delta_y = pts[1, 1] - pts[0, 1]
@@ -42,6 +49,9 @@ def align_image(image, pts, obj_center=False):
     else:
         rotation_center = None
     image = rotate_image(image, theta, rotation_center)
+    if enforce_upright:
+        if delta_x < 0:
+            image = cv2.flip(image, 0)
     return image
 
 
