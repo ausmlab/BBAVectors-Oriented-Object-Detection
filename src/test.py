@@ -107,7 +107,7 @@ class TestModule(object):
             with torch.no_grad():
                 pr_decs = self.model(image)
 
-            self.imshow_heatmap(pr_decs[2], image, os.path.join(self.save_dir, 'hmap_{}.png'.format(img_id)))
+            self.imshow_heatmap(pr_decs, image, os.path.join(self.save_dir, 'hmap_{}.png'.format(img_id)))
 
             torch.cuda.synchronize(self.device)
             decoded_pts = []

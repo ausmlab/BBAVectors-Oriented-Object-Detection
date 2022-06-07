@@ -11,11 +11,11 @@ class CTRBOX(nn.Module):
         assert down_ratio in [2, 4, 8, 16]
         self.l1 = int(np.log2(down_ratio))
         self.base_network = resnet.resnet101(pretrained=pretrained)
-        # self.dec_c2 = CombinationModule(512, 256, batch_norm=True)
-        # self.dec_c3 = CombinationModule(1024, 512, batch_norm=True)
-        # self.dec_c4 = CombinationModule(2048, 1024, batch_norm=True)
-        self.dec_c3 = CombinationModule(512, 256, batch_norm=True)
-        self.dec_c4 = CombinationModule(1024, 512, batch_norm=True)
+        self.dec_c2 = CombinationModule(512, 256, batch_norm=True)
+        self.dec_c3 = CombinationModule(1024, 512, batch_norm=True)
+        self.dec_c4 = CombinationModule(2048, 1024, batch_norm=True)
+        # self.dec_c3 = CombinationModule(512, 256, batch_norm=True)
+        # self.dec_c4 = CombinationModule(1024, 512, batch_norm=True)
 
         self.heads = heads
 
@@ -54,11 +54,11 @@ class CTRBOX(nn.Module):
         #     plt.imsave(os.path.join('dilation', '{}.png'.format(idx)), temp)
         c4_combine = self.dec_c4(x[-1], x[-2])
         c3_combine = self.dec_c3(c4_combine, x[-3])
-        # c2_combine = self.dec_c2(c3_combine, x[-4])
+        c2_combine = self.dec_c2(c3_combine, x[-4])
 
         dec_dict = {}
         for head in self.heads:
-            dec_dict[head] = self.__getattr__(head)(c3_combine)
+            dec_dict[head] = self.__getattr__(head)(c2_combine)
             if 'hm' in head or 'cls' in head:
                 dec_dict[head] = torch.sigmoid(dec_dict[head])
         return dec_dict

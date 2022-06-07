@@ -1,5 +1,9 @@
-torchvision==0.8.1
-numpy==1.22.3
-scipy==1.8.0
-scikit-learn==1.0.2
-Pillow==8.4
+# pandas < 1.3 requires protbuf > 3.9.2 which messes up tensorboard
+protobuf==3.20.0
+pandas
+numpy
+scipy
+scikit-learn
+Pillow
+seaborn
+tensorboard

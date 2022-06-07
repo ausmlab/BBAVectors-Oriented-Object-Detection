@@ -9,6 +9,7 @@ import argparse
 from tqdm import tqdm
 
 
+
 def rotate_image(image, angle, image_center=None):
     if image_center is None:
         image_center = tuple(np.array(image.shape[1::-1]) / 2)
@@ -20,7 +21,7 @@ def rotate_image(image, angle, image_center=None):
 def align_pnts(pts, center):
     delta_x = pts[1, 0] - pts[0, 0]
     delta_y = pts[1, 1] - pts[0, 1]
-    theta = math.degrees(np.arctan(delta_y/delta_x))
+    theta = math.degrees(np.arctan(delta_y / delta_x))
     rotation_mtrx = cv2.getRotationMatrix2D(center, theta, 1.0)
     shited_pnts = pts.reshape([4, 2])
     newrow = [1 for i in range(4)]
@@ -35,9 +36,9 @@ def align_image(image, pts, obj_center=False):
     # This is assuming the point are from top left and clockwise:
     delta_x = pts[1, 0] - pts[0, 0]
     delta_y = pts[1, 1] - pts[0, 1]
-    theta = math.degrees(np.arctan(delta_y/delta_x))
+    theta = math.degrees(np.arctan(delta_y / delta_x))
     if obj_center:
-        rotation_center = tuple(np.array([pts[1, 0] + pts[0, 0], pts[1, 1] + pts[0, 1]])/2)
+        rotation_center = tuple(np.array([pts[1, 0] + pts[0, 0], pts[1, 1] + pts[0, 1]]) / 2)
     else:
         rotation_center = None
     image = rotate_image(image, theta, rotation_center)
@@ -58,12 +59,7 @@ def crop_image(image, pts, object_margin=10):
     return crp_img
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Generates dataset for classification')
-    parser.add_argument('--src_path', type=str, default=None, help='path to DOTA dataset')
-    parser.add_argument('--dst_path', type=str, default=None, help='path to where images should be saved')
-    args = parser.parse_args()
-
+def prepare_image_files(args):
     dst_aligned_path = join(args.dst_path, 'aligned')
     dst_unaligned_path = join(args.dst_path, 'unaligned')
     src_path = args.src_path
@@ -81,12 +77,13 @@ if __name__ == '__main__':
             labels = f.readlines()
             for i, label in enumerate(labels):
                 x1, y1, x2, y2, x3, y3, x4, y4, category, _ = label.split(' ')
-                x1, y1, x2, y2, x3, y3, x4, y4 = int(float(x1)), int(float(y1)),int(float(x2)), int(float(y2)),int(float(x3)), int(float(y3)),int(float(x4)), int(float(y4))
+                x1, y1, x2, y2, x3, y3, x4, y4 = int(float(x1)), int(float(y1)), int(float(x2)), int(float(y2)), int(
+                    float(x3)), int(float(y3)), int(float(x4)), int(float(y4))
                 x = np.zeros(image.shape, dtype=np.uint8)
                 pts = np.array([[x1, y1], [x2, y2],
                                 [x3, y3], [x4, y4]],
-                                np.int32).reshape(-1, 1, 2)
-                mask = cv2.fillPoly(x,[pts],255)
+                               np.int32).reshape(-1, 1, 2)
+                mask = cv2.fillPoly(x, [pts], 255)
                 object = cv2.bitwise_or(image, image, mask=mask)
                 obj_img = crop_image(object, (x1, y1, x2, y2, x3, y3, x4, y4))
                 or_pts = copy.deepcopy(pts)
@@ -101,7 +98,8 @@ if __name__ == '__main__':
                 center = tuple(np.array(image.shape[1::-1]) / 2)
                 pts = align_pnts(pts.reshape([4, 2]), center)
                 y1, x1, y2, x2, y3, x3, y4, x4 = pts.reshape(8)
-                if max(pts.reshape((4, 2))[:,0]) > image.shape[1] or max(pts.reshape((4, 2))[:,1]) > image.shape[0] or min(pts.reshape((8))) < 0:
+                if max(pts.reshape((4, 2))[:, 0]) > image.shape[1] or max(pts.reshape((4, 2))[:, 1]) > image.shape[
+                    0] or min(pts.reshape((8))) < 0:
                     continue
                 obj_img = crop_image(obj_img, (y1, x1, y2, x2, y3, x3, y4, x4))
                 pathlib.Path(join(dst_aligned_path, category)).mkdir(parents=True, exist_ok=True)
@@ -110,3 +108,39 @@ if __name__ == '__main__':
                 if obj_img.shape[0] < obj_img.shape[1]:
                     obj_img = cv2.rotate(obj_img, cv2.ROTATE_90_CLOCKWISE)
                 cv2.imwrite(image_final_name, obj_img)
+
+
+def merge_classes(src_path, dst_path, new_class_name='object'):
+    pathlib.Path(dst_path).mkdir(parents=True, exist_ok=True)
+    label_files = [f for f in listdir(src_path) if isfile(join(src_path, f))]
+    for label_file in label_files:
+        with open(join(src_path, label_file)) as f_in:
+            labels = f_in.readlines()
+            dst_file = join(dst_path, label_file)
+            with open(dst_file, 'w') as f_out:
+                for label in labels:
+                    words = label.strip('\n').split(' ')
+                    co_ordinations = ' '.join(words[:-2])
+                    difficulty = words[-1]
+                    new_label = '{} {} {}\n'.format(co_ordinations, new_class_name, difficulty)
+                    f_out.write(new_label)
+
+
+def prepare_labels(args):
+    merge_classes(args.src_path, args.dst_path)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Generates dataset for classification')
+    parser.add_argument('--src_path', type=str, default=None, help='path to DOTA dataset')
+    parser.add_argument('--dst_path', type=str, default=None, help='path to where images should be saved')
+    parser.add_argument('--phase', type=str, default='images',
+                        help='images: extracts objects and re-aligns them in a new dir,'
+                             'labels: creates new labels where all objects '
+                             'have the same label')
+
+    args = parser.parse_args()
+    if args.phase == 'image':
+        prepare_image_files(args)
+    elif args.phase =='label':
+        prepare_labels(args)
