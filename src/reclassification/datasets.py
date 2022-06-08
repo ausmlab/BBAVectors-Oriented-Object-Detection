@@ -56,10 +56,73 @@ def build_transform(size,is_train=True):
     ])
     return transform
 
-def build_dataloader(args):
+
+class CustomDataset(ImageFolder):
+    def __init__(self, root, transform):
+        super().__init__(root, transform)
+
+    def __getitem__(self, index):
+        path, target = self.samples[index]
+        sample = self.loader(path)
+        if self.transform is not None:
+            sample = self.transform(sample)
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+
+        return sample, target, path
+
+
+class PartLoaderVal(ImageFolder):
+    def __init__(self, root, transform, nparts=3, height=180):
+        super().__init__(root, transform)
+        self.nparts = 3
+        self.height = height
+        self.top_border = int(self.height/3)
+        self.bottom_border = self.top_border * 2
+
+    def __getitem__(self, index):
+        path, target = self.samples[index]
+        sample = self.loader(path)
+        if self.transform is not None:
+            sample = self.transform(sample)
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+        top = sample[:self.top_border,:,:]
+        middle = sample[self.top_border:self.bottom_border,:,:]
+        bottom = sample[self.bottom_border:,:,:]
+        return [top, middle, bottom, sample], target, path
+
+
+
+class PartLoader(ImageFolder):
+    def __init__(self, root, transform, nparts=3, height=180):
+        super().__init__(root, transform)
+        self.nparts = 3
+        self.height = height
+        self.top_border = int(self.height/3)
+        self.bottom_border = self.top_border * 2
+
+    def __getitem__(self, index):
+        path, target = self.samples[index]
+        sample = self.loader(path)
+        if self.transform is not None:
+            sample = self.transform(sample)
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+        top = sample[:self.top_border,:,:]
+        middle = sample[self.top_border:self.bottom_border,:,:]
+        bottom = sample[self.bottom_border:,:,:]
+        return [top, middle, bottom, sample], target
+
+
+def build_dataloader(args, partloader=False):
     transform_train = build_transform(args, is_train=True)
-    dataset_train=ImageFolder(os.path.join(args.dataset_path,"train"),
-                              transform_train)
+    if partloader:
+        dataset_train=PartLoaderVal(os.path.join(args.dataset_path,"train"),
+                                  transform_train)
+    else:
+        dataset_train=ImageFolder(os.path.join(args.dataset_path,"train"),
+                                  transform_train)
     dataloader_train=DataLoader(dataset_train,batch_size=args.batch_size,
                                 shuffle=True,num_workers=args.nthreads,drop_last=True)
 
@@ -82,20 +145,4 @@ def build_val_dataloader(data_dir, size, nthreads=8):
                               transform_val)
     dataloader_val = DataLoader(dataset_val, batch_size=8,
                                   shuffle=False, num_workers=nthreads)
-
     return dataloader_val, dataset_val
-
-
-class CustomDataset(ImageFolder):
-    def __init__(self, root, transform):
-        super().__init__(root, transform)
-
-    def __getitem__(self, index):
-        path, target = self.samples[index]
-        sample = self.loader(path)
-        if self.transform is not None:
-            sample = self.transform(sample)
-        if self.target_transform is not None:
-            target = self.target_transform(target)
-
-        return sample, target, path

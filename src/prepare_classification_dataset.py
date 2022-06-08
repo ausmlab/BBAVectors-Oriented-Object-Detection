@@ -32,10 +32,15 @@ def align_pnts(pts, center):
     return readjusted_pnts.astype(int)
 
 
-def align_image(image, pts, obj_center=False, enforce_upright=True):
+def vertical_align_image(image, pts):
+    delta_x = pts[1, 0] - pts[0, 0]
+    if delta_x < 0:
+        image = cv2.flip(image, 0)
+    return image
+
+
+def align_image(image, pts, obj_center=False):
     """
-    @param enforce_upright: if the front of box is facing down, will re-align
-    it, so it will be facing up.
     @param image: this is a second param
     @param pts: points in bounding box, in clockwise order, starting
     from front-left side of box
@@ -49,9 +54,6 @@ def align_image(image, pts, obj_center=False, enforce_upright=True):
     else:
         rotation_center = None
     image = rotate_image(image, theta, rotation_center)
-    if enforce_upright:
-        if delta_x < 0:
-            image = cv2.flip(image, 0)
     return image
 
 
@@ -89,11 +91,12 @@ def prepare_image_files(args):
                 x1, y1, x2, y2, x3, y3, x4, y4, category, _ = label.split(' ')
                 x1, y1, x2, y2, x3, y3, x4, y4 = int(float(x1)), int(float(y1)), int(float(x2)), int(float(y2)), int(
                     float(x3)), int(float(y3)), int(float(x4)), int(float(y4))
-                x = np.zeros(image.shape, dtype=np.uint8)
+                x = np.zeros(image.shape[:2], dtype=np.uint8)
                 pts = np.array([[x1, y1], [x2, y2],
                                 [x3, y3], [x4, y4]],
                                np.int32).reshape(-1, 1, 2)
                 mask = cv2.fillPoly(x, [pts], 255)
+                # object = cv2.bitwise_and(image, mask)
                 object = cv2.bitwise_or(image, image, mask=mask)
                 obj_img = crop_image(object, (x1, y1, x2, y2, x3, y3, x4, y4))
                 or_pts = copy.deepcopy(pts)
@@ -112,6 +115,7 @@ def prepare_image_files(args):
                     0] or min(pts.reshape((8))) < 0:
                     continue
                 obj_img = crop_image(obj_img, (y1, x1, y2, x2, y3, x3, y4, x4))
+                obj_img = vertical_align_image(obj_img, pts.reshape([4, 2]))
                 pathlib.Path(join(dst_aligned_path, category)).mkdir(parents=True, exist_ok=True)
                 image_final_name = join(dst_aligned_path, category,
                                         image_name.split('.')[0] + str(i) + '.' + image_name.split('.')[1])
